@@ -4,8 +4,8 @@ import json
 
 from login import *
 
-engine = 'VOCALOID'
-title = '殿堂'
+#engine = 'VOCALOID'
+#title = '殿堂'
 class Videoids:
     def __init__(self, nnd: (str|None), ytb: (str|None), bb: (str|None)):
         self.nnd = nnd

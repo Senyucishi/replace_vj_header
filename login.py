@@ -41,7 +41,6 @@ def FetchToken(tokentype):
         "format": "json"
     }
     data = PostAPI(params)
-    print(data)
     return data['query']['tokens'][tokentype + 'token']
 
 
