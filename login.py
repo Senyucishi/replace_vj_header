@@ -4,8 +4,8 @@ import os
 workspace = {  # 创建字典用以储存用户和令牌信息
     'URL': "https://mzh.moegirl.org.cn/api.php",
     'SESSION': requests.Session(),
-    'lgname': 'Senyucishi',# 用户名 \#gitignore
-    'lgpassword': "",# 密码 \#gitignore
+    'lgname': 'Senyucishi',# 用户名  \#gitignore
+    'lgpassword': "",# 密码  \#gitignore
     'f_path' : 'list.txt',
     'csrftoken': '',
 }

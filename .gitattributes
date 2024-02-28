@@ -1,3 +1,2 @@
-login.py filter=rm_conf
-login.py filter=rm_conf
-login.py filter=rm_conf
+login.py filter=gitignore
+
