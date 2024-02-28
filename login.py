@@ -5,7 +5,7 @@ workspace = {  # 创建字典用以储存用户和令牌信息
     'URL': "https://mzh.moegirl.org.cn/api.php",
     'SESSION': requests.Session(),
     'lgname': 'Senyucishi',
-    'lgpassword': "Senyu-12345",
+    'lgpassword': "",
     'f_path' : 'list.txt',
     'csrftoken': '',
 }
