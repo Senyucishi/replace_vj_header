@@ -4,8 +4,7 @@ import json
 
 from login import *
 
-#engine = 'VOCALOID'
-#title = '殿堂'
+engine = 'VOCALOID'
 class Videoids:
     def __init__(self, nnd: (str|None), ytb: (str|None), bb: (str|None)):
         self.nnd = nnd
@@ -64,19 +63,22 @@ def req_ncount(nnid) -> int :
         print('无法获取n站播放')
 
 def req_ycount(ytid) -> int:
-    response = requests.get(f'https://www.youtube.com/watch?v={ytid}')
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"
+    }
+    response = requests.get(f'https://www.youtube.com/watch?v={ytid}',headers=headers)
     if response.status_code == 200:
-        soup = BeautifulSoup(response.text, 'lxml')
+        soup = BeautifulSoup(response.text, 'html.parser')
         rawmeta = soup.select_one('meta[itemprop="interactionCount"][content]')
         return int(rawmeta['content'])
     else:
         print('无法获取YouTube播放')
 
 def get_vid (text) -> Videoids:
-    if not re.match(r'\{\{tabs', text.text):
-        nnd = re.findall(r'\|nnd_id\s*=\s*(sm\d+)', text.text, re.IGNORECASE)
-        ytb = re.findall(r'\|yt_id\s*=\s*(\w{11})', text.text)
-        bb = re.findall(r'\|bb_id\s*=\s*((?:av|bv)\w+)', text.text, re.IGNORECASE)
+    if not re.match(r'\{\{tabs', text.text, re.IGNORECASE):
+        nnd = re.findall(r'\|nnd_id\s+=\s+(sm\d+)', text.text, re.IGNORECASE)
+        ytb = re.findall(r'\|yt_id\s+=\s+([a-zA-Z0-9_-]{11})', text.text, re.IGNORECASE)
+        bb = re.findall(r'\|bb_id\s+=\s+((?:av|bv)\w+)', text.text, re.IGNORECASE)
         if len(nnd) == 1:
             fnnd = nnd[0]
         else:
@@ -91,43 +93,50 @@ def get_vid (text) -> Videoids:
             fbb = None
 
         return Videoids(nnd=fnnd, ytb=fytb, bb=fbb)
-
+    else:
+        raise TabError
 def gen_heading(vid: Videoids) -> str:
     header = "{{虚拟歌手歌曲荣誉题头|" + engine
     ids = [vid.nnd, vid.ytb, vid.bb]
-    ncount = req_ncount(ids[0])
-    ycount = req_ycount(ids[1])
-    bcount = req_bcount(ids[2])
+    ncount = None
+    bcount = None
+    ycount = None
+    if ids[0] is not None:
+        ncount = req_ncount(ids[0])
+    if ids[1] is not None:
+        ycount = req_ycount(ids[1])
+    if ids[2] is not None:
+        bcount = req_bcount(ids[2])
     if ncount is not None:
         print('niconico上的播放数为' + str(ncount))
         if 100000 <= ncount < 1000000:
-            header = header + '|nrank = 1'
+            header = header + '|nrank=1'
         elif 1000000 <= ncount < 10000000:
-            header = header + '|nrank = 2'
+            header = header + '|nrank=2'
         elif ncount >= 10000000:
-            header = header + '|nrank = 3'
+            header = header + '|nrank=3'
     else:
         print('无niconico投稿数据')
     if bcount is not None:
         print('bilibili上的播放数为' + str(bcount))
         if 100000 <= bcount < 1000000:
-            header = header + '|brank = 1'
+            header = header + '|brank=1'
         elif 1000000 <= bcount < 10000000:
-            header = header + '|brank = 2'
+            header = header + '|brank=2'
         elif bcount >= 10000000:
-            header = header + '|brank = 3'
+            header = header + '|brank=3'
     else:
         print('无bilibili投稿数据')
     if ycount is not None:
         print('YouTube上的播放数为'+str(ycount))
         if 100000 <= ycount < 1000000:
-            header = header + '|yrank = 1'
+            header = header + '|yrank=1'
         elif 1000000 <= ycount < 10000000:
-            header = header + '|yrank = 2'
+            header = header + '|yrank=2'
         elif 10000000 <= ycount < 100000000:
-            header = header + '|yrank = 3'
+            header = header + '|yrank=3'
         elif ycount >= 100000000:
-            header = header + '|yrank = 4'
+            header = header + '|yrank=4'
     else:
         print('无YouTube投稿数据')
     header = header + '}}'
@@ -140,8 +149,11 @@ def main():
         for line in f:
             page = line.rstrip()
             text = requests.get(
-                f"https://moegirl.uk/api.php?action=parse&format=json&page={page}&prop=parsewarnings%7Cwikitext&section=0&disabletoc=1&useskin=vector&utf8=1")
-            vid = get_vid(text)
+                f"https://mzh.moegirl.org.cn/api.php?action=parse&format=json&page={page}&prop=parsewarnings%7Cwikitext&section=0&disabletoc=1&useskin=vector&utf8=1")
+            try:
+                vid = get_vid(text)
+            except TabError:
+                continue
             header = gen_heading(vid)
             replace = r'\{\{VOCALOID(?:殿堂|传说)曲题头\S*\}\}'
             wikitext = json.loads(text.text)['parse']['wikitext']['*']
@@ -149,7 +161,7 @@ def main():
             param = {
                 'action': 'edit',
                 'format': 'json',
-                'title': 'page',
+                'title': page,
                 'section': 0,
                 'text': new_text,
                 'summary': '批量替换题头',
@@ -157,19 +169,22 @@ def main():
                 'minor': 1,
                 'bot': 1,
                 'nocreate': 1,
-                'redirect': 1,
                 'token': FetchToken('csrf'),
                 'utf8':1
             }
-            result = json.loads(PostAPI(param))
-            if result["edit"]["result"] == "Success":
-                if 'newrevid' in result["edit"]:
-                    oidid = '{}'.format(result["edit"]["newrevid"])
-                    print(f"页面{page}编辑成功，新的修订id为{oidid}")
+            result = PostAPI(param)
+            try:
+                if result["edit"]["result"] == "Success":
+                    if 'newrevid' in result["edit"]:
+                        oidid = '{}'.format(result["edit"]["newrevid"])
+                        print(f"页面{page}编辑成功，新的修订id为{oidid}")
+                    else:
+                        print(f"页面{page}内容一致")
                 else:
-                    print(f"页面{page}内容一致")
-            else:
+                    print(f"页面{page}编辑失败，请检查后重试")
+            except KeyError:
                 print(f"页面{page}编辑失败，请检查后重试")
+                continue
 
 if __name__ == '__main__':
     main()
