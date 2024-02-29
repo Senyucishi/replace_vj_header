@@ -111,45 +111,52 @@ def gen_heading(vid: Videoids) -> str:
     num = 0
     if ids[0] is not None:
         ncount = req_ncount(ids[0])
-        num = num +1
     if ids[1] is not None:
         ycount = req_ycount(ids[1])
-        num = num + 1
     if ids[2] is not None:
         bcount = req_bcount(ids[2])
-        num = num + 1
-    if num <= 1:
-        raise TabError
     if ncount is not None:
         print('niconico上的播放数为' + str(ncount))
         if 100000 <= ncount < 1000000:
             header = header + '|nrank=1'
+            num = num + 1
         elif 1000000 <= ncount < 10000000:
             header = header + '|nrank=2'
+            num = num + 1
         elif ncount >= 10000000:
             header = header + '|nrank=3'
+            num = num + 1
     else:
         print('无niconico投稿数据')
     if bcount is not None:
         print('bilibili上的播放数为' + str(bcount))
         if 100000 <= bcount < 1000000:
             header = header + '|brank=1'
+            num = num + 1
         elif 1000000 <= bcount < 10000000:
             header = header + '|brank=2'
+            num = num + 1
         elif bcount >= 10000000:
             header = header + '|brank=3'
+            num = num + 1
     else:
         print('无bilibili投稿数据')
     if ycount is not None:
         print('YouTube上的播放数为'+str(ycount))
         if 100000 <= ycount < 1000000:
             header = header + '|yrank=1'
+            num = num + 1
         elif 1000000 <= ycount < 10000000:
             header = header + '|yrank=2'
+            num = num + 1
         elif 10000000 <= ycount < 100000000:
             header = header + '|yrank=3'
+            num = num + 1
         elif ycount >= 100000000:
             header = header + '|yrank=4'
+            num = num + 1
+    if num <= 1:
+        raise TabError
     else:
         print('无YouTube投稿数据')
     header = header + '}}'
