@@ -63,21 +63,3 @@ def PostAPI(params, timeout=20):
         os.system("pause")  # 暂停程序
         return {}
 
-def PostAPI(params, timeout=20):
-    # 输入：字典类型，访问API的模块名、方法名和参数等
-    # 功能：将一个请求通过API提交并解析返回值（JSON格式）
-    # 输出：字典类型，经过解析的原始返回值
-    # 另注：鉴于内容很多，取消了timeout参数，不然时间不足以完全提交上去
-
-    try:
-        resource = workspace['SESSION'].post(url=workspace['URL'], data=params)
-        data = resource.json()
-        return data
-    except requests.exceptions.ReadTimeout:
-        print(params["action"] + "操作超时，程序已暂停")
-        os.system("pause")  # 暂停程序
-        return None
-    except:
-        print(params["action"] + "操作错误，程序已暂停")
-        os.system("pause")  # 暂停程序
-        return {}
