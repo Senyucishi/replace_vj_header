@@ -40,27 +40,33 @@ def get_bv(vid: str) -> str:
         return av_to_bv(search_av.group(0))
     return vid
 
-def req_bcount(bbid) -> int :
+def req_bcount(bbid: str) -> int :
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"
     }
     vid = get_bv(bbid)
     url = f"https://api.bilibili.com/x/web-interface/view?bvid={vid}"
     response = json.loads(requests.get(url=url, headers=headers).text)
-    views = response['data']['stat']['view']
-    return int(views)
+    if response is not None:
+        views = response['data']['stat']['view']
+        return int(views)
+    else:
+        raise TabError
 
-def req_ncount(nnid) -> int :
+def req_ncount(nnid: str) -> int :
     response = requests.get(f'https://www.nicovideo.jp/watch/{nnid}')
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'lxml')
         rawjson = soup.find('script', attrs={'class', 'LdJson'})
         raw = json.loads(rawjson.get_text())
-        return int(raw['interactionStatistic'][0]['userInteractionCount'])
+        if raw is not None:
+            return int(raw['interactionStatistic'][0]['userInteractionCount'])
+        else:
+            raise TabError
     else:
         print('无法获取n站播放')
 
-def req_ycount(ytid) -> int:
+def req_ycount(ytid: str) -> int:
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"
     }
@@ -68,7 +74,10 @@ def req_ycount(ytid) -> int:
     if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
         rawmeta = soup.select_one('meta[itemprop="interactionCount"][content]')
-        return int(rawmeta['content'])
+        if rawmeta is not None:
+            return int(rawmeta['content'])
+        else:
+            raise TabError
     else:
         print('无法获取YouTube播放')
 
