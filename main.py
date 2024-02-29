@@ -47,11 +47,12 @@ def req_bcount(bbid: str) -> int :
     vid = get_bv(bbid)
     url = f"https://api.bilibili.com/x/web-interface/view?bvid={vid}"
     response = json.loads(requests.get(url=url, headers=headers).text)
-    if response is not None:
+    if response['code'] == 0 :
         views = response['data']['stat']['view']
         return int(views)
     else:
-        raise TabError
+        print('bilibili已删稿')
+
 
 def req_ncount(nnid: str) -> int :
     response = requests.get(f'https://www.nicovideo.jp/watch/{nnid}')
@@ -59,10 +60,10 @@ def req_ncount(nnid: str) -> int :
         soup = BeautifulSoup(response.text, 'lxml')
         rawjson = soup.find('script', attrs={'class', 'LdJson'})
         raw = json.loads(rawjson.get_text())
-        if raw is not None:
+        if rawjson is not None:
             return int(raw['interactionStatistic'][0]['userInteractionCount'])
         else:
-            raise TabError
+            print('niconico已删稿')
     else:
         print('无法获取n站播放')
 
@@ -77,13 +78,13 @@ def req_ycount(ytid: str) -> int:
         if rawmeta is not None:
             return int(rawmeta['content'])
         else:
-            raise TabError
+            print('Youtube已删稿')
     else:
         print('无法获取YouTube播放')
 
 def get_vid (text) -> Videoids:
     if not re.match(r'\{\{tabs', text.text, re.IGNORECASE):
-        nnd = re.findall(r'\|nnd_id\s+=\s+(sm\d+)', text.text, re.IGNORECASE)
+        nnd = re.findall(r'\|nnd_id\s+=\s+((?:sm|nm|so)\d+)', text.text, re.IGNORECASE)
         ytb = re.findall(r'\|yt_id\s+=\s+([a-zA-Z0-9_-]{11})', text.text, re.IGNORECASE)
         bb = re.findall(r'\|bb_id\s+=\s+((?:av|bv)\w+)', text.text, re.IGNORECASE)
         if len(nnd) == 1:
@@ -114,6 +115,7 @@ def gen_heading(vid: Videoids) -> str:
     if ids[1] is not None:
         ycount = req_ycount(ids[1])
     if ids[2] is not None:
+        print(ids[2])
         bcount = req_bcount(ids[2])
     if ncount is not None:
         print('niconico上的播放数为' + str(ncount))
@@ -155,10 +157,14 @@ def gen_heading(vid: Videoids) -> str:
         elif ycount >= 100000000:
             header = header + '|yrank=4'
             num = num + 1
-    if num <= 1:
-        raise TabError
     else:
         print('无YouTube投稿数据')
+    if num == 1:
+        print('识别到单平台成就')
+        raise TabError
+    elif num == 0:
+        print('未识别到成就')
+        raise TabError
     header = header + '}}'
     print('应悬挂的题头为：' + header)
     return header
@@ -171,6 +177,7 @@ def main():
             text = requests.get(
                 f"https://moegirl.uk/api.php?action=parse&format=json&page={page}&prop=parsewarnings%7Cwikitext&section=0&utf8=1")
             try:
+                print(f'\n对于条目{page}:')
                 vid = get_vid(text)
                 header = gen_heading(vid)
             except TabError:
@@ -207,6 +214,7 @@ def main():
             except KeyError:
                 print(f"页面{page}编辑失败，请检查后重试")
                 continue
+
 
 if __name__ == '__main__':
     main()
