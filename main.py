@@ -74,9 +74,9 @@ def req_ycount(ytid) -> int:
 
 def get_vid (text) -> Videoids:
     if not re.match(r'\{\{tabs', text.text):
-        nnd = re.findall(r'\|nnd_id\s+=\s+(sm\d+)', text.text, re.IGNORECASE)
-        ytb = re.findall(r'\|yt_id\s+=\s+(\w{11})', text.text)
-        bb = re.findall(r'\|bb_id\s+=\s+((?:av|bv)\w+)', text.text, re.IGNORECASE)
+        nnd = re.findall(r'\|nnd_id\s*=\s*(sm\d+)', text.text, re.IGNORECASE)
+        ytb = re.findall(r'\|yt_id\s*=\s*(\w{11})', text.text)
+        bb = re.findall(r'\|bb_id\s*=\s*((?:av|bv)\w+)', text.text, re.IGNORECASE)
         if len(nnd) == 1:
             fnnd = nnd[0]
         else:
@@ -143,10 +143,33 @@ def main():
                 f"https://moegirl.uk/api.php?action=parse&format=json&page={page}&prop=parsewarnings%7Cwikitext&section=0&disabletoc=1&useskin=vector&utf8=1")
             vid = get_vid(text)
             header = gen_heading(vid)
-            replace = r'{{VOCALOID殿堂曲题头\S*}}'
+            replace = r'\{\{VOCALOID(?:殿堂|传说)曲题头\S*\}\}'
             wikitext = json.loads(text.text)['parse']['wikitext']['*']
             new_text = re.sub(pattern = replace, repl = header, string = wikitext, flags = re.IGNORECASE)
-
+            param = {
+                'action': 'edit',
+                'format': 'json',
+                'title': 'page',
+                'section': 0,
+                'text': new_text,
+                'summary': '批量替换题头',
+                'tags': 'Bot',
+                'minor': 1,
+                'bot': 1,
+                'nocreate': 1,
+                'redirect': 1,
+                'token': FetchToken('csrf'),
+                'utf8':1
+            }
+            result = json.loads(PostAPI(param))
+            if result["edit"]["result"] == "Success":
+                if 'newrevid' in result["edit"]:
+                    oidid = '{}'.format(result["edit"]["newrevid"])
+                    print(f"页面{page}编辑成功，新的修订id为{oidid}")
+                else:
+                    print(f"页面{page}内容一致")
+            else:
+                print(f"页面{page}编辑失败，请检查后重试")
 
 if __name__ == '__main__':
     main()
