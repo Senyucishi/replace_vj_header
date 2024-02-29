@@ -45,10 +45,8 @@ def req_bcount(bbid) -> int :
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36"
     }
     vid = get_bv(bbid)
-    print(vid)
     url = f"https://api.bilibili.com/x/web-interface/view?bvid={vid}"
     response = json.loads(requests.get(url=url, headers=headers).text)
-    print(response)
     views = response['data']['stat']['view']
     return int(views)
 
@@ -155,13 +153,14 @@ def main():
         for line in f:
             page = line.rstrip()
             text = requests.get(
-                f"https://mzh.moegirl.org.cn/api.php?action=parse&format=json&page={page}&prop=parsewarnings%7Cwikitext&section=0&disabletoc=1&useskin=vector&utf8=1")
+                f"https://moegirl.uk/api.php?action=parse&format=json&page={page}&prop=parsewarnings%7Cwikitext&section=0&utf8=1")
             try:
                 vid = get_vid(text)
                 header = gen_heading(vid)
             except TabError:
+                print(f'已跳过{page}')
                 continue
-            replace = r'\{\{VOCALOID(?:殿堂|传说)曲题头\S*\}\}'
+            replace = r'\{\{VOCALOID(?:殿堂|传说|傳說)曲(?:题头|題頭)\S*\}\}'
             wikitext = json.loads(text.text)['parse']['wikitext']['*']
             new_text = re.sub(pattern = replace, repl = header, string = wikitext, flags = re.IGNORECASE)
             param = {
@@ -179,6 +178,7 @@ def main():
                 'utf8':1
             }
             result = PostAPI(param)
+            print(result)
             try:
                 if result["edit"]["result"] == "Success":
                     if 'newrevid' in result["edit"]:
