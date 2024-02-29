@@ -101,12 +101,18 @@ def gen_heading(vid: Videoids) -> str:
     ncount = None
     bcount = None
     ycount = None
+    num = 0
     if ids[0] is not None:
         ncount = req_ncount(ids[0])
+        num = num +1
     if ids[1] is not None:
         ycount = req_ycount(ids[1])
+        num = num + 1
     if ids[2] is not None:
         bcount = req_bcount(ids[2])
+        num = num + 1
+    if num <= 1:
+        raise TabError
     if ncount is not None:
         print('niconico上的播放数为' + str(ncount))
         if 100000 <= ncount < 1000000:
@@ -152,9 +158,9 @@ def main():
                 f"https://mzh.moegirl.org.cn/api.php?action=parse&format=json&page={page}&prop=parsewarnings%7Cwikitext&section=0&disabletoc=1&useskin=vector&utf8=1")
             try:
                 vid = get_vid(text)
+                header = gen_heading(vid)
             except TabError:
                 continue
-            header = gen_heading(vid)
             replace = r'\{\{VOCALOID(?:殿堂|传说)曲题头\S*\}\}'
             wikitext = json.loads(text.text)['parse']['wikitext']['*']
             new_text = re.sub(pattern = replace, repl = header, string = wikitext, flags = re.IGNORECASE)
