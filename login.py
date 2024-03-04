@@ -1,12 +1,11 @@
 import requests
-import os
 
 workspace = {  # 创建字典用以储存用户和令牌信息
     'URL': "https://mzh.moegirl.org.cn/api.php",
     'SESSION': requests.Session(),
-    'lgname': 'Senyucishi',# 用户名
+    'lgname': '',# 用户名
     'lgpassword': "",# 密码
-    'f_path' : 'list.txt',
+    'f_path' : 'pages.txt',
     'csrftoken': '',
 }
 def LogIn():
@@ -49,17 +48,21 @@ def PostAPI(params, timeout=20):
     # 功能：将一个请求通过API提交并解析返回值（JSON格式）
     # 输出：字典类型，经过解析的原始返回值
     # 另注：鉴于内容很多，取消了timeout参数，不然时间不足以完全提交上去
+    status = False
+    request_times = 1
+    while not status:
+        if request_times <= 15:
+            try:
+                resource = workspace['SESSION'].post(url=workspace['URL'], data=params)
+                data = resource.json()
+                if resource.status_code == 200:
+                    status = True
+                    return data
+                else:
+                    print(f'第{request_times}次请求错误，HTTP状态码为{resource.status_code}，正在重试')
+                    request_times = request_times + 1
+            except:
+                print(f'第{request_times}次请求错误，正在重试')
+                request_times = request_times + 1
 
-    try:
-        resource = workspace['SESSION'].post(url=workspace['URL'], data=params)
-        data = resource.json()
-        return data
-    except requests.exceptions.ReadTimeout:
-        print(params["action"] + "操作超时，程序已暂停")
-        os.system("pause")  # 暂停程序
-        return None
-    except:
-        print(params["action"] + "操作错误，程序已暂停")
-        os.system("pause")  # 暂停程序
-        return {}
 
